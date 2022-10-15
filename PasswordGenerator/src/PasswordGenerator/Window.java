@@ -6,16 +6,13 @@ import javax.swing.*;
 import java.util.*;
 
 public class Window implements ActionListener{
-
-	// TO-DO:
-	//		- when character user chose isnt in password it adds it to random position, but the problem is when there are not two values and it
-	//		overwrites the one added (FIND BETTER WAY TO CHECK IF EVERYTHING IS IN THE PASSWORD)
 	final JFrame frame;
 	final JLabel lengthText;
 	final JComboBox cb;
 	final JCheckBox symbols, numbers, lowercase, uppercase;
 	final JButton generate;
-	JTextField result;
+	final JTextField result;
+	String[] alphabet = {"", ""};	// for saving alphabet letters in lowercase and uppercase
 	
 	Window(){
 		// Initialize all variables
@@ -83,64 +80,54 @@ public class Window implements ActionListener{
 		int reach = 0; /* reach should be 0, because in while loop it checks if its equal to passwordlength and then in the end it will increase by 1
 					     if password length is 6 then it would go 1, check, 2, check, 3, check, 4, check, 5, check and stops, so password length would be
 					     5 even when users wanted 6*/
-		String chars = "";
+		String chars[] = {"", "", "", ""};	// Save 4 types of characters user can have
 		String passw = "";
 		
 		// Get all characters user wants in password
-		if(symbols.isSelected()) chars += symbols.getText();
-		if(numbers.isSelected()) chars += numbers.getText();
-		if(lowercase.isSelected()) chars += lowercase.getText();
-		if(uppercase.isSelected()) chars += uppercase.getText();
+		if(symbols.isSelected()) chars[0] += symbols.getText();
+		if(numbers.isSelected()) chars[1] += numbers.getText();
+		if(lowercase.isSelected()) {
+			for(int i = 97; i <= 122; i++)	// get characters from a - z
+				alphabet[0] += (char)i;
+			chars[2] += alphabet[0];
+		}
+		if(uppercase.isSelected()) {
+			for(int i = 65; i <= 90; i++)	// get characters from A - Z
+				alphabet[1] += (char)i;
+			chars[3] += alphabet[1];
+		}
 		
 		// Loop while reach aint equal to password length, add character to password
+		int index = 0;
 		while(reach != passwordLength) {
-			// Generate random int between 0 and chars length (String with all characters user wants)
-			Random rand = new Random();
-			int rand_int  = rand.nextInt(chars.length());
-			// Add character to password string
-			passw += chars.charAt(rand_int);
-			reach++;
+			if(chars[index].length() != 0) {	// When string length in array chars isnt zero do stuff
+				// Generate random int between 0 and chars length (String with all characters user wants)
+				Random rand = new Random();
+				int rand_int  = rand.nextInt(chars[index].length());
+				// Add character to password string
+				passw += chars[index].charAt(rand_int);
+				reach++;
+			}
+			index++;
+			if(index > 3)
+				index = 0;
 		}
 		
-		// Convert string to stringBuilder for changing char values inside method CheckChar
-		StringBuilder passwBuild = new StringBuilder();
-		passwBuild.append(passw);
-		
-		// Checking if password contains every character user wanted, sending boolean if checkbox is selected if not it returns
-		CheckChar(passwBuild, symbols.getText(), symbols.isSelected());
-		CheckChar(passwBuild, numbers.getText(), numbers.isSelected());
-		CheckChar(passwBuild, lowercase.getText(), lowercase.isSelected());
-		CheckChar(passwBuild, uppercase.getText(), uppercase.isSelected());
-		
-		return passw;
+		return Shuffle(passw);
 	}
 	
-	// Check if every any character of characters use chose is in the password
-	void CheckChar(StringBuilder passw, String chars, boolean isSelected) {
-		// If checkbox for this characters isnt selected it returns
-		if(!isSelected) return;
-		// If string is will contain certain character it stops for checking
-		boolean contains = false;
-		// Loops through password
-		for(int i = 0; i < passw.length() && !contains; i++) {
-			// Loops through characters
-			for(int j = 0; j < chars.length(); j++) {
-				if(passw.equals(chars)) {
-					contains = true;
-					break;
-				}
-			}
+	// For shuffling characters in password
+	String Shuffle(String input) {
+		List<Character> characters = new ArrayList<Character>();
+		for(char c: input.toCharArray())
+			characters.add(c);
+		StringBuilder output = new StringBuilder(input.length());
+		while(characters.size() != 0) {
+			int randPicker = (int)(Math.random()*characters.size());
+			output.append(characters.remove(randPicker));
 		}
 		
-		// If it doesnt contain certain characters put random character into random position in string and call again CheckChar method
-		if(!contains) {
-			Random rand = new Random();
-			int rand_int_passw = rand.nextInt(passw.length());
-			int rand_int_chars = rand.nextInt(chars.length());
-			
-			passw.setCharAt(rand_int_passw, chars.charAt(rand_int_chars));
-			CheckChar(passw, chars, false);
-		}
+		return output.toString();
 	}
 	
 	// Add available password lengths to comboBox for user to choose (6 - 16)
